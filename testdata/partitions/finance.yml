@@ -1,0 +1,20 @@
+name: Finance
+description: Sample financial market tables
+
+tables:
+  - name: quotes
+    description: Quotes for stock symbols
+    columnFamilies:
+      - name: data
+        description: |
+          A column family for storing data about stock ticker quotes like symbol, exchange,
+          bid/ask value and size, etc.
+        policy:
+          versions: 10
+          ttl: 1d
+
+  - name: trades
+    description: Trade information for stock symbols
+    columnFamilies:
+      - name: data
+        description: Trade details like symbol, exchange, trade amount, time, etc.
