@@ -18,6 +18,9 @@ retool:
 		retool add github.com/golang/dep/cmd/dep v0.4.1; \
 	fi
 
+run:
+	@docker run -p 9035:9035 shopify/bigtable-emulator
+
 setup: retool
 	$(info Synching dev tools and dependencies...)
 	@retool sync
