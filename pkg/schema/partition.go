@@ -1,4 +1,4 @@
-package config
+package schema
 
 import (
 	yaml "gopkg.in/yaml.v2"
@@ -6,6 +6,7 @@ import (
 	"context"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -15,11 +16,10 @@ type Descriptor struct {
 	Description string `yaml:"description"`
 }
 
-// A Partition represents a table namespace with Cloud BigTable. It is essentially a prefix for tables contained within
-// it to simulate a namespace.
+// A Partition represents a set of table definitions
 type Partition struct {
-	Descriptor `yaml:",inline"`
-	Tables     []*Table `yaml:"tables"`
+	Name   string   `yaml:"name"`
+	Tables []*Table `yaml:"tables"`
 }
 
 // A Table represents a CBT table and the set of column families it defines
@@ -66,16 +66,15 @@ func ParseDirectory(ctx context.Context, dir string) <-chan *PartitionResult {
 }
 
 func parsePartition(path string) *PartitionResult {
+	partName := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	pr := PartitionResult{Partition: Partition{Name: partName}}
+
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return &PartitionResult{Err: err}
-	}
-
-	var pr PartitionResult
-	if err = yaml.Unmarshal(data, &pr.Partition); err != nil {
-		pr.Partition = Partition{}
 		pr.Err = err
+		return &pr
 	}
 
+	pr.Err = yaml.Unmarshal(data, &pr.Partition)
 	return &pr
 }

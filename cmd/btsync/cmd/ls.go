@@ -7,13 +7,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
-	"github.com/pseudomuto/btsync/pkg/config"
+	"github.com/pseudomuto/btsync/pkg/schema"
 )
 
 func init() {
-	lsCmd.Flags().Bool("remote", false, "list BT partitions")
 	rootCmd.AddCommand(lsCmd)
 }
 
@@ -33,19 +31,16 @@ var lsCmd = &cobra.Command{
 
 func listPartitionDirectory(ctx context.Context, dir string) error {
 	tw := NewTableWriter(os.Stdout)
-	tw.SetHeader([]string{"Name", "Description", "Tables"})
+	tw.SetHeader([]string{"Partition", "Name", "Description"})
 
-	for res := range config.ParseDirectory(ctx, dir) {
+	for res := range schema.ParseDirectory(ctx, dir) {
 		if res.Err != nil {
 			return res.Err
 		}
 
-		tables := make([]string, len(res.Partition.Tables))
-		for i, table := range res.Partition.Tables {
-			tables[i] = table.Name
+		for _, table := range res.Partition.Tables {
+			tw.Append([]string{res.Partition.Name, table.Name, table.Description})
 		}
-
-		tw.Append([]string{res.Partition.Name, res.Partition.Description, strings.Join(tables, ",")})
 	}
 
 	if tw.NumLines() == 0 {

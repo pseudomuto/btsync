@@ -1,4 +1,4 @@
-package config_test
+package schema_test
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pseudomuto/btsync/pkg/config"
+	"github.com/pseudomuto/btsync/pkg/schema"
 )
 
 func TestParseDirectory(t *testing.T) {
@@ -24,8 +24,8 @@ func TestParseDirectory(t *testing.T) {
 		for _, test := range tests {
 			count := 0
 
-			for res := range config.ParseDirectory(ctx, test.dir) {
-				assert.NotEmpty(t, res.Partition.Name)
+			for res := range schema.ParseDirectory(ctx, test.dir) {
+				assert.NotEmpty(t, res.Partition)
 				assert.NoError(t, res.Err)
 				count++
 			}
@@ -49,8 +49,9 @@ func TestParseDirectory(t *testing.T) {
 			errIdx := 0
 			errCount := 0
 
-			for res := range config.ParseDirectory(context.Background(), test.dir) {
-				assert.Empty(t, res.Partition)
+			for res := range schema.ParseDirectory(context.Background(), test.dir) {
+				assert.NotEmpty(t, res.Partition) // identifies the bad partition
+				assert.Empty(t, res.Partition.Tables)
 				assert.Contains(t, res.Err.Error(), test.errs[errIdx])
 
 				errIdx++

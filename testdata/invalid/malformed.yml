@@ -1,5 +1,2 @@
-name: Bad Definition
-description: Sample poorly formed partition
-
 tables:
   object: wrong type
