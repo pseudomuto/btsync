@@ -12,6 +12,44 @@ import (
 	"github.com/pseudomuto/btsync/pkg/internal"
 )
 
+func TestTable(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("when table exists", func(t *testing.T) {
+		tbl := &bigtable.TableConf{
+			TableID: "some_table",
+			Families: map[string]bigtable.GCPolicy{
+				"data": bigtable.NoGcPolicy(),
+			},
+		}
+
+		internal.WithBTServer(func(ac *bigtable.AdminClient) {
+			// create the table
+			assert.NoError(t, ac.CreateTableFromConf(ctx, tbl))
+
+			conn := bt.NewWithAdminClient(ac)
+			defer conn.Close()
+
+			table, err := conn.Table(ctx, tbl.TableID)
+			assert.NoError(t, err)
+			assert.Len(t, table.Families, 1)
+			assert.Equal(t, bt.GCPolicy(""), table.Families["data"])
+		})
+	})
+
+	t.Run("when table not found", func(t *testing.T) {
+		internal.WithBTServer(func(ac *bigtable.AdminClient) {
+			conn := bt.NewWithAdminClient(ac)
+			defer conn.Close()
+
+			table, err := conn.Table(ctx, "some_table")
+			assert.Nil(t, table)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), "NotFound")
+		})
+	})
+}
+
 func TestTables(t *testing.T) {
 	ctx := context.Background()
 

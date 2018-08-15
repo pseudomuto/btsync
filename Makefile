@@ -1,7 +1,10 @@
 .DEFAULT_GOAL := build
 
 BUILD_DEPS =
-TEST_DEPS = $(BUILD_DEPS)
+TEST_DEPS = $(BUILD_DEPS) pkg/internal/mocks/Connection.go
+
+pkg/internal/mocks/Connection.go: pkg/bt/connection.go
+	@retool do mockery -dir pkg/bt -name Connection --output pkg/internal/mocks
 
 ################################################################################
 # PHONY Tasks

@@ -17,12 +17,19 @@ type ConnectionConfig struct {
 }
 
 // A Connection represents an admin connection to a BigTable cluster
-type Connection struct {
+type Connection interface {
+	Table(ctx context.Context, name string) (*Table, error)
+	Tables(ctx context.Context) <-chan TableResult
+
+	Close() error
+}
+
+type connection struct {
 	ac *bigtable.AdminClient
 }
 
 // New returns a new connection to a BigTable cluster
-func New(ctx context.Context, cfg ConnectionConfig) (*Connection, error) {
+func New(ctx context.Context, cfg ConnectionConfig) (Connection, error) {
 	opts := make([]option.ClientOption, 0, len(cfg.Options)+1)
 	opts = append(opts, cfg.Options...)
 
@@ -44,11 +51,11 @@ func New(ctx context.Context, cfg ConnectionConfig) (*Connection, error) {
 }
 
 // NewWithAdminClient returns a connection that uses the supplied admin client for the underlying connection
-func NewWithAdminClient(ac *bigtable.AdminClient) *Connection {
-	return &Connection{ac: ac}
+func NewWithAdminClient(ac *bigtable.AdminClient) Connection {
+	return &connection{ac: ac}
 }
 
 // Close closes the underlying BT client
-func (c *Connection) Close() error {
+func (c *connection) Close() error {
 	return c.ac.Close()
 }

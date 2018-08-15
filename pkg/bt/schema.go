@@ -19,8 +19,23 @@ type TableResult struct {
 	Err   error
 }
 
+// Table fetches details about the specified table
+func (c *connection) Table(ctx context.Context, name string) (*Table, error) {
+	info, err := c.ac.TableInfo(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	table := &Table{Name: name, Families: make(map[string]GCPolicy)}
+	for _, cf := range info.FamilyInfos {
+		table.Families[cf.Name] = GCPolicy(cf.GCPolicy)
+	}
+
+	return table, nil
+}
+
 // Tables enumerates the tables in the BT cluster
-func (c *Connection) Tables(ctx context.Context) <-chan TableResult {
+func (c *connection) Tables(ctx context.Context) <-chan TableResult {
 	stream := make(chan TableResult)
 
 	go func() {
@@ -44,16 +59,7 @@ func (c *Connection) Tables(ctx context.Context) <-chan TableResult {
 	return stream
 }
 
-func (c *Connection) getTable(ctx context.Context, tbl string) TableResult {
-	info, err := c.ac.TableInfo(ctx, tbl)
-	if err != nil {
-		return TableResult{Err: err}
-	}
-
-	table := &Table{Name: tbl, Families: make(map[string]GCPolicy)}
-	for _, cf := range info.FamilyInfos {
-		table.Families[cf.Name] = GCPolicy(cf.GCPolicy)
-	}
-
-	return TableResult{Table: table}
+func (c *connection) getTable(ctx context.Context, tbl string) TableResult {
+	table, err := c.Table(ctx, tbl)
+	return TableResult{Table: table, Err: err}
 }
